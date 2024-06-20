@@ -5,6 +5,7 @@ from dash import html
 # 2. instantiate/load object
 
 app = dash.Dash()  # creating our app, the variable holds an empty dashboard
+server = app.server
 
 app.layout = html.Div(html.H1(children = 'My First Spicy Dash'))
 
