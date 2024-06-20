@@ -128,3 +128,4 @@ widgetsnbextension==4.0.10
 xlrd==2.0.1
 zipp==3.19.2
 gunicorn
+dash_bootstrap_components
