@@ -184,4 +184,4 @@ def update_dashboard(selected_cities, date_range):
                         color_continuous_scale='Viridis',
                         title='Average Temperature in Germany')
     fig_map_choropleth.update_geos(fitbounds="locations", visible=False)
-    graph_choropleth_map = dcc.Graph(figure=fig_map_chor
+    graph_choropleth_map = dcc.Graph(figure=fig_map_choropleth)
