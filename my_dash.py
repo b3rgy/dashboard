@@ -71,7 +71,7 @@ graph_max_temp = dcc.Graph(figure=fig_max_temp_BCH)
 
 # create an interactive climate map for europe
 
-# Average temperature per city
+# Average temperature per city on map
 df_avg_temp = df.groupby(['city', 'lat', 'lon']).agg({'avg_temp_c': 'mean'}).reset_index()
 
 
@@ -80,7 +80,7 @@ fig_map = px.scatter_mapbox(df_avg_temp,
                         lon='lon', 
                         hover_name='city', 
                         hover_data={'avg_temp_c': True}, 
-                        color='avg_temp_c', 
+                        color='city', 
                         title='Average Temperature in European Cities', 
                         color_continuous_scale='Viridis',
                         size_max=15, 
