@@ -5,21 +5,14 @@ import datetime
 import pandas as pd
 from sqlalchemy import create_engine, text, types 
 from sqlalchemy.dialects.postgresql import JSON as postgres_json
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 import os
 import plotly.express as px
-from dotenv import load_dotenv
-import dash
-from dash import dcc, html, callback
+from dash import Dash, dcc, html, callback
 from dash.dependencies import Input, Output, State
-import plotly.express as px
-from dash import dash_table
 import dash_bootstrap_components as dbc
 
-# 1. import the packages
-# 2. instantiate/load object
-#connecting to thte database - extracting the data
-# copied from the course materials because Render is not calling the .env from my local drive but from the environment variables that we have setup
+# Load environment variables from the .env file
 load_dotenv()
 
 weather_api_key = os.getenv("WEATHER_API_KEY")
@@ -30,8 +23,7 @@ db_name = os.getenv("POSTGRES_DB")
 postgres_url = f'postgresql://postgres:{password}@{host}:5432/{db_name}'
 engine = create_engine(postgres_url, echo=False)
 
-# extracting the data
-
+# Extracting the data
 with engine.begin() as conn:
     result = conn.execute(text("SELECT * FROM mart_forecast_day;"))
     data = result.all()
@@ -43,12 +35,12 @@ start_date = df['date'].min()
 end_date = df['date'].max()
 
 # Instantiate/load the Dash app
-app = dash.Dash(__name__)
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 # Define the layout of the app
 app.layout = html.Div(children=[
-    html.H1(children='Temperature Dashboard'),
+    html.H1(id='title', children='Temperature Dashboard'),
     dcc.Dropdown(
         id='city-dropdown',
         options=[{'label': city, 'value': city} for city in df['city'].unique()],
@@ -66,11 +58,12 @@ app.layout = html.Div(children=[
 ])
 
 @app.callback(
-    Output('graphs', 'children'),
+    [Output('title', 'children'),
+     Output('graphs', 'children')],
     [Input('city-dropdown', 'value'),
      Input('date-slider', 'value')]
 )
-def update_graphs(selected_cities, date_range):
+def update_dashboard(selected_cities, date_range):
     start_date_range = start_date + pd.Timedelta(days=date_range[0])
     end_date_range = start_date + pd.Timedelta(days=date_range[1])
 
@@ -80,14 +73,18 @@ def update_graphs(selected_cities, date_range):
         (df['date'] <= end_date_range)
     ]
 
-    # Create an interactive line plot for Berlin, Cagliari, and Hamburg
+    # Create the title
+    date_range_str = f"{start_date_range.strftime('%Y-%m-%d')} to {end_date_range.strftime('%Y-%m-%d')}"
+    title = f"Temperature Dashboard: {', '.join(selected_cities)} ({date_range_str})"
+
+    # Create an interactive line plot for average temperatures
     fig_avg_temp_BCH = px.line(filtered_df, x='date', y='avg_temp_c', color='city', 
                   title='Average Temperatures in Selected Cities', 
                   labels={'date': 'Date', 'avg_temp_c': 'Average Temperature (°C)', 'city': 'Location'},
                   template='plotly_dark')
     graph_avg_temp = dcc.Graph(figure=fig_avg_temp_BCH)
 
-    # Create an interactive line plot for Berlin, Cagliari, and Hamburg
+    # Create an interactive line plot for max temperatures
     fig_max_temp_BCH = px.line(filtered_df, x='date', y='max_temp_c', color='city', 
                   title='Max Temperatures in Selected Cities', 
                   labels={'date': 'Date', 'max_temp_c': 'Max Temperature (°C)', 'city': 'Location'},
@@ -124,7 +121,7 @@ def update_graphs(selected_cities, date_range):
                         title='Average Temperature in European Countries')
     graph_choropleth_map = dcc.Graph(figure=fig_map_choropleth)
 
-    return [graph_max_temp, graph_avg_temp, graph_map, graph_choropleth_map]
+    return title, [graph_max_temp, graph_avg_temp, graph_map, graph_choropleth_map]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
