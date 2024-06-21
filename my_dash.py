@@ -11,6 +11,7 @@ import plotly.express as px
 from dash import Dash, dcc, html, callback
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+import dash_table
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -91,6 +92,31 @@ def update_dashboard(selected_cities, date_range):
                   template='plotly_dark')
     graph_max_temp = dcc.Graph(figure=fig_max_temp_BCH)
 
+    # Create tables for the datapoints
+    table_max_temp = dash_table.DataTable(
+        columns=[
+            {'name': 'Date', 'id': 'date'},
+            {'name': 'City', 'id': 'city'},
+            {'name': 'Max Temperature (°C)', 'id': 'max_temp_c'}
+        ],
+        data=filtered_df[['date', 'city', 'max_temp_c']].to_dict('records'),
+        style_table={'overflowX': 'auto'},
+        style_cell={'textAlign': 'left', 'padding': '5px'},
+        style_header={'backgroundColor': 'gray', 'fontWeight': 'bold'}
+    )
+
+    table_avg_temp = dash_table.DataTable(
+        columns=[
+            {'name': 'Date', 'id': 'date'},
+            {'name': 'City', 'id': 'city'},
+            {'name': 'Average Temperature (°C)', 'id': 'avg_temp_c'}
+        ],
+        data=filtered_df[['date', 'city', 'avg_temp_c']].to_dict('records'),
+        style_table={'overflowX': 'auto'},
+        style_cell={'textAlign': 'left', 'padding': '5px'},
+        style_header={'backgroundColor': 'gray', 'fontWeight': 'bold'}
+    )
+
     # Average temperature per city on map
     df_avg_temp = filtered_df.groupby(['city', 'lat', 'lon']).agg({'avg_temp_c': 'mean'}).reset_index()
 
@@ -121,7 +147,20 @@ def update_dashboard(selected_cities, date_range):
                         title='Average Temperature in European Countries')
     graph_choropleth_map = dcc.Graph(figure=fig_map_choropleth)
 
-    return title, [graph_max_temp, graph_avg_temp, graph_map, graph_choropleth_map]
+    return title, [
+        html.Div([
+            dbc.Row([
+                dbc.Col(graph_max_temp, width=8),
+                dbc.Col(table_max_temp, width=4)
+            ]),
+            dbc.Row([
+                dbc.Col(graph_avg_temp, width=8),
+                dbc.Col(table_avg_temp, width=4)
+            ]),
+            graph_map,
+            graph_choropleth_map
+        ])
+    ]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
