@@ -92,10 +92,10 @@ graph_map = dcc.Graph(figure=fig_map)
 # creating a chloropleth map of avg temp
 
 # Aggregate the average temperature by country
-df_avg_temp = df.groupby(['country']).agg({'avg_temp_c': 'mean'}).reset_index()
+df_avg_temp_choropleth = df.groupby(['country']).agg({'avg_temp_c': 'mean'}).reset_index()
 
 # Create a choropleth map
-fig_map_choropleth = px.choropleth(df_avg_temp, 
+fig_map_choropleth = px.choropleth(df_avg_temp_choropleth, 
                     locations='country',
                     locationmode='country names',
                     color='avg_temp_c',
