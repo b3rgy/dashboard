@@ -191,3 +191,4 @@ def update_dashboard(selected_cities, date_range):
             dbc.Row([
                 dbc.Col(graph_avg_temp, width=8),
                 dbc.Col
+           ]),]),]
