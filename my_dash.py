@@ -89,12 +89,26 @@ fig_map = px.scatter_mapbox(df_avg_temp,
 fig_map.update_layout(mapbox_style='open-street-map')
 graph_map = dcc.Graph(figure=fig_map)
 
+# creating a chloropleth map of avg temp
+
+# Aggregate the average temperature by country
+df_avg_temp = df.groupby(['country']).agg({'avg_temp_c': 'mean'}).reset_index()
+
+# Create a choropleth map
+fig_map_choropleth = px.choropleth(df_avg_temp, 
+                    locations='country',
+                    locationmode='country names',
+                    color='avg_temp_c',
+                    hover_name='country',
+                    color_continuous_scale='Viridis',
+                    title='Average Temperature in European Countries')
+
 app = dash.Dash()  # creating our app, the variable holds an empty dashboard
 server = app.server
 
 app.layout = html.Div(children=[
     html.H1(children='Temperature Dashboard'),
-    html.Div([graph_max_temp,graph_avg_temp,graph_map])
+    html.Div([graph_max_temp,graph_avg_temp,graph_map, fig_map_choropleth])
     ])
 
 
