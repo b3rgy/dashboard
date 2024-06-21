@@ -169,26 +169,19 @@ def update_dashboard(selected_cities, date_range):
     fig_map.update_layout(mapbox_style='open-street-map')
     graph_map = dcc.Graph(figure=fig_map)
 
-    # Aggregate the average temperature by country
-    df_avg_temp_choropleth = filtered_df.groupby(['country']).agg({'avg_temp_c': 'mean'}).reset_index()
+    # Filter for Germany
+    df_germany = filtered_df[filtered_df['country'] == 'Germany']
+    df_avg_temp_choropleth = df_germany.groupby(['city']).agg({'avg_temp_c': 'mean'}).reset_index()
 
-    # Create a choropleth map
+    # Create a choropleth map for Germany
     fig_map_choropleth = px.choropleth(df_avg_temp_choropleth, 
-                        locations='country',
-                        locationmode='country names',
+                        locations='city',
+                        locationmode='geojson-id',
                         color='avg_temp_c',
-                        hover_name='country',
+                        hover_name='city',
+                        geojson='https://raw.githubusercontent.com/deldersveld/topojson/master/countries/germany/germany-splitted.json',
+                        featureidkey='properties.name',
                         color_continuous_scale='Viridis',
-                        title='Average Temperature in European Countries')
-    graph_choropleth_map = dcc.Graph(figure=fig_map_choropleth)
-
-    return title, [
-        html.Div([
-            dbc.Row([
-                dbc.Col(graph_max_temp, width=8),
-                dbc.Col(table_max_temp, width=4)
-            ]),
-            dbc.Row([
-                dbc.Col(graph_avg_temp, width=8),
-                dbc.Col
-           ]),]),]
+                        title='Average Temperature in Germany')
+    fig_map_choropleth.update_geos(fitbounds="locations", visible=False)
+    graph_choropleth_map = dcc.Graph(figure=fig_map_chor
