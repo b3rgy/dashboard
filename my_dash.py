@@ -31,31 +31,9 @@ with engine.begin() as conn:
 
 df = pd.DataFrame(data)
 
-# Fetching the weather icons
-def fetch_weather_icons(api_key, cities, start_date, end_date):
-    weather_data = []
-    for city in cities:
-        for date in pd.date_range(start=start_date, end=end_date):
-            response = requests.get(f"http://api.weatherapi.com/v1/history.json?key={api_key}&q={city}&dt={date.strftime('%Y-%m-%d')}")
-            if response.status_code == 200:
-                data = response.json()
-                for forecast in data['forecast']['forecastday']:
-                    weather_data.append({
-                        'date': forecast['date'],
-                        'city': city,
-                        'country': data['location']['country'],
-                        'avg_temp_c': forecast['day']['avgtemp_c'],
-                        'max_temp_c': forecast['day']['maxtemp_c'],
-                        'condition_text': forecast['day']['condition']['text'],
-                        'condition_icon': forecast['day']['condition']['icon']
-                    })
-    return pd.DataFrame(weather_data)
-
-cities = df['city'].unique()
+# Define the start and end date for the range slider
 start_date = df['date'].min()
 end_date = df['date'].max()
-
-df_weather = fetch_weather_icons(weather_api_key, cities, start_date, end_date)
 
 # Instantiate/load the Dash app
 app = Dash(__name__, external_stylesheets=[dbc.themes.SLATE])  # Use Slate for dark theme
@@ -97,10 +75,10 @@ def update_dashboard(selected_cities, date_range):
     start_date_range = start_date + pd.Timedelta(days=date_range[0])
     end_date_range = start_date + pd.Timedelta(days=date_range[1])
 
-    filtered_df = df_weather[
-        (df_weather['city'].isin(selected_cities)) &
-        (df_weather['date'] >= start_date_range) &
-        (df_weather['date'] <= end_date_range)
+    filtered_df = df[
+        (df['city'].isin(selected_cities)) &
+        (df['date'] >= start_date_range) &
+        (df['date'] <= end_date_range)
     ]
 
     # Create the title
@@ -126,30 +104,24 @@ def update_dashboard(selected_cities, date_range):
         columns=[
             {'name': 'Date', 'id': 'date'},
             {'name': 'City', 'id': 'city'},
-            {'name': 'Max Temperature (°C)', 'id': 'max_temp_c'},
-            {'name': 'Weather', 'id': 'condition_text'},
-            {'name': 'Icon', 'id': 'condition_icon', 'presentation': 'markdown'}
+            {'name': 'Max Temperature (°C)', 'id': 'max_temp_c'}
         ],
-        data=filtered_df[['date', 'city', 'max_temp_c', 'condition_text', 'condition_icon']].to_dict('records'),
+        data=filtered_df[['date', 'city', 'max_temp_c']].to_dict('records'),
         style_table={'overflowX': 'auto', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'},
         style_cell={'textAlign': 'left', 'padding': '5px', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'},
-        style_header={'backgroundColor': '#1f2c39', 'fontWeight': 'bold', 'color': '#ecf0f1'},
-        markdown_options={"html": True}
+        style_header={'backgroundColor': '#1f2c39', 'fontWeight': 'bold', 'color': '#ecf0f1'}
     )
 
     table_avg_temp = dash_table.DataTable(
         columns=[
             {'name': 'Date', 'id': 'date'},
             {'name': 'City', 'id': 'city'},
-            {'name': 'Average Temperature (°C)', 'id': 'avg_temp_c'},
-            {'name': 'Weather', 'id': 'condition_text'},
-            {'name': 'Icon', 'id': 'condition_icon', 'presentation': 'markdown'}
+            {'name': 'Average Temperature (°C)', 'id': 'avg_temp_c'}
         ],
-        data=filtered_df[['date', 'city', 'avg_temp_c', 'condition_text', 'condition_icon']].to_dict('records'),
+        data=filtered_df[['date', 'city', 'avg_temp_c']].to_dict('records'),
         style_table={'overflowX': 'auto', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'},
         style_cell={'textAlign': 'left', 'padding': '5px', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'},
-        style_header={'backgroundColor': '#1f2c39', 'fontWeight': 'bold', 'color': '#ecf0f1'},
-        markdown_options={"html": True}
+        style_header={'backgroundColor': '#1f2c39', 'fontWeight': 'bold', 'color': '#ecf0f1'}
     )
 
     # Average temperature per city on map
@@ -169,19 +141,33 @@ def update_dashboard(selected_cities, date_range):
     fig_map.update_layout(mapbox_style='open-street-map')
     graph_map = dcc.Graph(figure=fig_map)
 
-    # Filter for Germany
-    df_germany = filtered_df[filtered_df['country'] == 'Germany']
-    df_avg_temp_choropleth = df_germany.groupby(['city']).agg({'avg_temp_c': 'mean'}).reset_index()
+    # Aggregate the average temperature by country
+    df_avg_temp_choropleth = filtered_df.groupby(['country']).agg({'avg_temp_c': 'mean'}).reset_index()
 
-    # Create a choropleth map for Germany
+    # Create a choropleth map
     fig_map_choropleth = px.choropleth(df_avg_temp_choropleth, 
-                        locations='city',
-                        locationmode='geojson-id',
+                        locations='country',
+                        locationmode='country names',
                         color='avg_temp_c',
-                        hover_name='city',
-                        geojson='https://raw.githubusercontent.com/deldersveld/topojson/master/countries/germany/germany-splitted.json',
-                        featureidkey='properties.name',
+                        hover_name='country',
                         color_continuous_scale='Viridis',
-                        title='Average Temperature in Germany')
-    fig_map_choropleth.update_geos(fitbounds="locations", visible=False)
+                        title='Average Temperature in European Countries')
     graph_choropleth_map = dcc.Graph(figure=fig_map_choropleth)
+
+    return title, [
+        html.Div([
+            dbc.Row([
+                dbc.Col(graph_max_temp, width=8),
+                dbc.Col(table_max_temp, width=4)
+            ]),
+            dbc.Row([
+                dbc.Col(graph_avg_temp, width=8),
+                dbc.Col(table_avg_temp, width=4)
+            ]),
+            graph_map,
+            graph_choropleth_map
+        ])
+    ]
+
+if __name__ == '__main__':
+    app.run_server(debug=True)
