@@ -69,12 +69,28 @@ fig_max_temp_BCH = px.line(df_filtered, x='date', y='max_temp_c', color='city',
               template='plotly_dark')
 graph_max_temp = dcc.Graph(figure=fig_max_temp_BCH)
 
+# create an interactive climate map for europe
+
+fig_map = px.scatter_mapbox(df_avg_temp, 
+                        lat='latitude', 
+                        lon='longitude', 
+                        hover_name='city', 
+                        hover_data={'avg_temp_c': True}, 
+                        color='avg_temp_c', 
+                        title='Average Temperature in European Cities', 
+                        color_continuous_scale='Viridis',
+                        size_max=15, 
+                        zoom=3)
+
+fig_map.update_layout(mapbox_style='open-street-map')
+
+
 app = dash.Dash()  # creating our app, the variable holds an empty dashboard
 server = app.server
 
 app.layout = html.Div(children=[
     html.H1(children='Temperature Dashboard'),
-    html.Div([graph_max_temp,graph_avg_temp])
+    html.Div([graph_max_temp,graph_avg_temp,fig_map])
     ])
 
 
