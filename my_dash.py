@@ -83,14 +83,14 @@ fig_map = px.scatter_mapbox(df_avg_temp,
                         zoom=3)
 
 fig_map.update_layout(mapbox_style='open-street-map')
-
+graph_map = dcc.Graph(figure=fig_map)
 
 app = dash.Dash()  # creating our app, the variable holds an empty dashboard
 server = app.server
 
 app.layout = html.Div(children=[
     html.H1(children='Temperature Dashboard'),
-    html.Div([graph_max_temp,graph_avg_temp,fig_map])
+    html.Div([graph_max_temp,graph_avg_temp,graph_map])
     ])
 
 
