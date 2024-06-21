@@ -102,13 +102,14 @@ fig_map_choropleth = px.choropleth(df_avg_temp_choropleth,
                     hover_name='country',
                     color_continuous_scale='Viridis',
                     title='Average Temperature in European Countries')
+graph_choropleth_map = dcc.Graph(figure=fig_map_choropleth)
 
 app = dash.Dash()  # creating our app, the variable holds an empty dashboard
 server = app.server
 
 app.layout = html.Div(children=[
     html.H1(children='Temperature Dashboard'),
-    html.Div([graph_max_temp,graph_avg_temp,graph_map, fig_map_choropleth])
+    html.Div([graph_max_temp,graph_avg_temp,graph_map,graph_choropleth_map])
     ])
 
 
