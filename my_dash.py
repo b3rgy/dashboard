@@ -36,27 +36,34 @@ start_date = df['date'].min()
 end_date = df['date'].max()
 
 # Instantiate/load the Dash app
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, external_stylesheets=[dbc.themes.SLATE])  # Use Slate for dark theme
 server = app.server
 
 # Define the layout of the app
-app.layout = html.Div(children=[
-    html.H1(id='title', children='Temperature Dashboard'),
-    dcc.Dropdown(
-        id='city-dropdown',
-        options=[{'label': city, 'value': city} for city in df['city'].unique()],
-        value=['Berlin', 'Cagliari', 'Hamburg'],
-        multi=True
-    ),
-    dcc.RangeSlider(
-        id='date-slider',
-        min=0,
-        max=(end_date - start_date).days,
-        value=[0, (end_date - start_date).days],
-        marks={i: (start_date + pd.Timedelta(days=i)).strftime('%Y-%m-%d') for i in range(0, (end_date - start_date).days + 1, 30)}
-    ),
-    html.Div(id='graphs')
-])
+app.layout = html.Div(
+    style={'font-family': 'Helvetica', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'}, 
+    children=[
+        html.H1(id='title', children='Temperature Dashboard'),
+        dbc.Row([
+            dbc.Col(dcc.Dropdown(
+                id='city-dropdown',
+                options=[{'label': city, 'value': city} for city in df['city'].unique()],
+                value=['Berlin', 'Cagliari', 'Hamburg'],
+                multi=True,
+                style={'width': '100%'}
+            ), width=6),
+            dbc.Col(dcc.RangeSlider(
+                id='date-slider',
+                min=0,
+                max=(end_date - start_date).days,
+                value=[0, (end_date - start_date).days],
+                marks={i: (start_date + pd.Timedelta(days=i)).strftime('%Y-%m-%d') for i in range(0, (end_date - start_date).days + 1, 30)},
+                tooltip={"placement": "bottom", "always_visible": True}
+            ), width=6)
+        ]),
+        html.Div(id='graphs')
+    ]
+)
 
 @app.callback(
     [Output('title', 'children'),
@@ -100,9 +107,9 @@ def update_dashboard(selected_cities, date_range):
             {'name': 'Max Temperature (°C)', 'id': 'max_temp_c'}
         ],
         data=filtered_df[['date', 'city', 'max_temp_c']].to_dict('records'),
-        style_table={'overflowX': 'auto'},
-        style_cell={'textAlign': 'left', 'padding': '5px'},
-        style_header={'backgroundColor': 'gray', 'fontWeight': 'bold'}
+        style_table={'overflowX': 'auto', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'},
+        style_cell={'textAlign': 'left', 'padding': '5px', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'},
+        style_header={'backgroundColor': '#1f2c39', 'fontWeight': 'bold', 'color': '#ecf0f1'}
     )
 
     table_avg_temp = dash_table.DataTable(
@@ -112,9 +119,9 @@ def update_dashboard(selected_cities, date_range):
             {'name': 'Average Temperature (°C)', 'id': 'avg_temp_c'}
         ],
         data=filtered_df[['date', 'city', 'avg_temp_c']].to_dict('records'),
-        style_table={'overflowX': 'auto'},
-        style_cell={'textAlign': 'left', 'padding': '5px'},
-        style_header={'backgroundColor': 'gray', 'fontWeight': 'bold'}
+        style_table={'overflowX': 'auto', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'},
+        style_cell={'textAlign': 'left', 'padding': '5px', 'backgroundColor': '#2c3e50', 'color': '#ecf0f1'},
+        style_header={'backgroundColor': '#1f2c39', 'fontWeight': 'bold', 'color': '#ecf0f1'}
     )
 
     # Average temperature per city on map
